@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Expert Parallelism in 300 Lines of NumPy — ved1beta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0a0a; --surface: #121212; --border: #1f1f1f;
+    --fg: #e8e8e3; --fg-dim: #b8b8b3; --muted: #6a6a66;
+    --accent: #a3e635;
+    --sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+    --serif: "Instrument Serif", Georgia, serif;
+  }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:var(--sans); }
+  * { box-sizing: border-box; }
+  ::selection { background: color-mix(in oklab, var(--accent) 35%, transparent); color: var(--fg); }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in oklab, var(--accent) 40%, transparent); }
+  a:hover { border-bottom-color: var(--accent); }
+
+  .wrap { max-width: 720px; margin: 0 auto; padding: 56px 32px 140px; }
+  .topbar { display:flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .6px; text-transform: uppercase; max-width: 1200px; margin: 0 auto; padding: 20px 32px; border-bottom: 1px solid var(--border); }
+  .topbar a { color: var(--fg-dim); border: none; }
+  .topbar a:hover { color: var(--accent); }
+
+  .meta { font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: .4px; display: flex; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; }
+  .meta .dot { color: #333; }
+
+  h1.title { font-size: 56px; font-weight: 400; letter-spacing: -1.2px; line-height: 1.05; margin: 0; text-wrap: balance; }
+  .dek { font-family: var(--serif); font-style: italic; font-size: 26px; color: var(--fg-dim); line-height: 1.35; margin-top: 18px; text-wrap: pretty; }
+
+  article p { font-size: 17.5px; line-height: 1.75; color: #d8d8d3; margin: 22px 0; text-wrap: pretty; }
+  article h2 { font-size: 28px; font-weight: 400; letter-spacing: -.4px; margin: 72px 0 4px; line-height: 1.2; }
+  article h2 .num { font-family: var(--mono); font-size: 12px; color: var(--accent); display: block; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  article h3 { font-size: 20px; font-weight: 500; margin: 44px 0 -6px; color: var(--fg); }
+
+  article ul { padding-left: 22px; }
+  article li { font-size: 17px; line-height: 1.7; color: #d8d8d3; margin: 10px 0; }
+  article li strong { color: var(--fg); font-weight: 500; }
+
+  article code { font-family: var(--mono); font-size: 14.5px; color: var(--accent); background: color-mix(in oklab, var(--accent) 6%, transparent); padding: 1px 6px; border-radius: 3px; }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; overflow: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.7; color: #d0d0cb; }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+  pre .k { color: var(--accent); }
+  pre .c { color: var(--muted); font-style: italic; }
+
+  blockquote { border-left: 2px solid var(--accent); margin: 28px 0; padding: 4px 0 4px 20px; color: var(--fg-dim); font-family: var(--serif); font-style: italic; font-size: 19px; line-height: 1.55; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 72px 0; }
+
+  .lede { font-size: 20px; color: var(--fg); line-height: 1.6; margin-top: 30px; }
+  .lede::first-line { letter-spacing: .2px; }
+
+  .endnote { margin-top: 120px; padding-top: 36px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 12.5px; color: var(--muted); line-height: 1.8; }
+
+  .tag-row { display:flex; gap: 8px; flex-wrap: wrap; }
+  .tag { font-family: var(--mono); font-size: 10.5px; color: var(--muted); border: 1px solid var(--border); padding: 3px 8px; border-radius: 3px; letter-spacing: .5px; text-transform: uppercase; }
+
+  .ornament { display:flex; justify-content: center; margin: 48px 0; color: var(--muted); letter-spacing: 8px; font-family: var(--mono); font-size: 12px; }
+
+  figure { margin: 64px 0; }
+  figure.breakout { width: calc(100% + 160px); margin-left: -80px; margin-right: -80px; }
+  figure.fullbleed { width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); }
+  figure img { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 2px; filter: grayscale(0.08) contrast(1.02); }
+  figure.fullbleed img { border-left: none; border-right: none; border-radius: 0; }
+  figcaption { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 14px; letter-spacing: .4px; line-height: 1.6; display: flex; gap: 14px; }
+  figcaption .fignum { color: var(--accent); white-space: nowrap; }
+  figcaption em { font-family: var(--serif); font-style: italic; color: var(--fg-dim); font-size: 13px; letter-spacing: 0; }
+  @media (max-width: 900px) { figure.breakout, figure.fullbleed { width: 100%; margin-left: 0; margin-right: 0; } }
+
+  table.reductions { border-collapse: collapse; width: 100%; margin: 28px 0; font-size: 14.5px; }
+  table.reductions th, table.reductions td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.reductions th { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .6px; text-transform: uppercase; font-weight: 400; }
+  table.reductions td { color: #d8d8d3; }
+  table.reductions td:first-child { font-family: var(--mono); color: var(--accent); font-size: 13px; white-space: nowrap; }
+
+  .author-card { display: flex; align-items: center; gap: 14px; margin-top: 32px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+  .author-card img { width: 44px; height: 44px; border-radius: 999px; object-fit: cover; border: 1px solid var(--border); filter: grayscale(0.15) contrast(1.02); }
+  .author-card .info { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .author-card .info a { color: var(--fg-dim); border: none; }
+  .author-card .info a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/">← ved1beta</a>
+  <div>essay · 2026</div>
+</div>
+
+<div class="wrap">
+  <article>
+    <div class="meta">
+      <span>2026-05-01</span><span class="dot">·</span>
+      <span>10 min read</span><span class="dot">·</span>
+      <span>Draft v1</span><span class="dot">·</span>
+      <span class="tag-row"><span class="tag">moe</span><span class="tag">parallelism</span><span class="tag">systems</span></span>
+    </div>
+
+    <h1 class="title">Expert Parallelism, in 300 Lines of NumPy</h1>
+    <div class="dek">Three hundred lines of NumPy and mpi4py. Two MPI primitives. One verification harness. The whole MoE training pattern, with nowhere to hide.</div>
+    <div class="author-card">
+      <img src="assets/headshot.jpeg" alt="Ved" />
+      <div class="info">
+        <div>by <a href="/">Ved</a> · systems engineer at Axolotl AI</div>
+        <div>github / <a href="https://github.com/ved1beta">ved1beta</a> · x / @ant_vedaya</div>
+      </div>
+    </div>
+
+    <p class="lede">A year ago I wrote my first MoE in CUDA. This post is about writing my second one — in NumPy, sharded across processes with mpi4py. About three hundred lines, two MPI primitives doing the heavy lifting, one verification harness that proves the sharded gradients match the single-process reference to machine epsilon.</p>
+
+    <p>This is a sequel to <a href="https://github.com/ved1beta/GPU-sanghathan">GPU-sanghathan</a>, which already had data parallelism and pipeline parallelism wired through mpi4py — the same MPI Python bindings used for HPC and research codebases for years. I wanted to see what changed when expert parallelism (EP) joined the stack. The answer turned out to be: a lot, and the interesting parts are at the seams.</p>
+
+    <figure class="breakout">
+      <img src="assets/tower.jpg" alt="" />
+      <figcaption><em>what scale looks like, from below.</em></figcaption>
+    </figure>
+
+    <div class="ornament">· · ·</div>
+
+    <h2><span class="num">§ 01</span>Why expert parallelism exists</h2>
+
+    <p>Modern frontier models &mdash; GPT-4, DeepSeek-V3, Mixtral &mdash; are all mixtures of experts. The motivation: at fixed compute per token, can we cram in more parameters? Yes, and the trick is sparsity.</p>
+
+    <p>Inside each transformer block, instead of one FFN that processes every token, you have <em>N</em> FFNs (&ldquo;experts&rdquo;) and a small router. The router is a <code>Linear(d_model, n_experts)</code> followed by softmax. For each token, you pick the top-<em>k</em> experts (typically <em>k</em>=2) and run only those. Their outputs are gate-weighted and summed.</p>
+
+    <p>A 64-expert MoE with top-<em>k</em>=2 has roughly 32&times; the parameters of a single FFN, but each token only touches 2 of 64. Same flops per token, far more capacity. The router is trained jointly with the experts via a load-balancing auxiliary loss &mdash; without it, the router collapses to &ldquo;always pick expert 0&rdquo; and 63 of your experts go cold.</p>
+
+    <h3>The four parallelism axes</h3>
+
+    <p>Modern training stacks compose four orthogonal ways of splitting work across GPUs. This project implements three; tensor parallelism is the fourth.</p>
+
+    <ul>
+      <li><strong>Data parallel (DP).</strong> Each GPU has a full copy of the model. Each processes a different slice of the batch. After backward, every GPU&rsquo;s gradients are averaged via <code>Allreduce</code>. The cheapest axis &mdash; <code>DistributedDataParallel</code> in PyTorch.</li>
+      <li><strong>Tensor parallel (TP).</strong> Splits individual weight matrices across GPUs. A <code>Linear(4096&rarr;4096)</code> becomes &ldquo;GPU 0 owns half the columns, GPU 1 owns the other half.&rdquo; Each does half the matmul, then they <code>Allreduce</code>. Used when single matrices stop fitting in one GPU&rsquo;s memory.</li>
+      <li><strong>Pipeline parallel (PP).</strong> Splits the model between layers, like an assembly line. GPU 0 owns layers 1&ndash;8, GPU 1 owns 9&ndash;16; activations <code>Send</code>/<code>Recv</code> between adjacent stages.</li>
+      <li><strong>Expert parallel (EP).</strong> Different experts live on different GPUs. The router stays replicated, but tokens are shipped via <code>Alltoall</code> to the rank that owns their chosen expert, run there, then shipped back. The new comm primitive &mdash; <code>Alltoall</code> &mdash; is what makes EP qualitatively different from DP and PP.</li>
+    </ul>
+
+    <p>All four compose. A typical large-scale MoE run might use DP=64 &times; PP=8 &times; EP=8 across 4096 GPUs.</p>
+
+    <h2><span class="num">§ 02</span>Wiring the process grid</h2>
+
+    <p>Before anything else, organise the workers. Three axes, every rank getting its own coordinate <code>(dp_idx, pp_idx, ep_idx)</code>. Rank 0 is at the corner, rank 1 sits one step over on the EP axis, and so on:</p>
+
+<pre><code>rank = dp_idx &middot; (PP&middot;EP)  +  pp_idx &middot; EP  +  ep_idx</code></pre>
+
+    <p>Why count EP first? Because EP is the chattiest axis &mdash; it fires an alltoall every time an MoE layer runs forward &mdash; so we want EP-adjacent ranks to land on the same socket if we can help it. Rank 0 and rank 1 should be next-door neighbours, not on opposite sides of a cluster.</p>
+
+    <p>For each axis we need a sub-communicator: a slice of the world containing exactly the ranks that should talk to each other for that one purpose. MPI hands us <code>Split(color, key)</code> &mdash; same color means same group &mdash; and the rest is bookkeeping.</p>
+
+<pre><code><span class="k">def</span> make_comms(DP, PP, EP, world=<span class="k">None</span>):
+    <span class="k">if</span> world <span class="k">is None</span>:
+        world = MPI.COMM_WORLD
+    rank   = world.Get_rank()
+    ep_idx = rank % EP
+    pp_idx = (rank // EP) % PP
+    dp_idx = rank // (EP * PP)
+
+    ep_comm = world.Split(color=dp_idx * PP + pp_idx, key=ep_idx)
+    pp_comm = world.Split(color=dp_idx * EP + ep_idx, key=pp_idx)
+    dp_comm = world.Split(color=pp_idx * EP + ep_idx, key=dp_idx)
+    <span class="k">return</span> dp_comm, pp_comm, ep_comm, (dp_idx, pp_idx, ep_idx)</code></pre>
+
+    <p>The trick is in the colors. Each one fixes two of the three coordinates and lets the third vary. <code>dp_comm</code> groups ranks that share <code>(pp, ep)</code> &mdash; model replicas that should average gradients. <code>pp_comm</code> groups ranks that share <code>(dp, ep)</code> &mdash; pipeline stages that hand off activations. <code>ep_comm</code> groups ranks that share <code>(dp, pp)</code> &mdash; expert peers that all-to-all tokens.</p>
+
+    <p>Spin this up at <code>world=8</code>, DP=PP=EP=2 and you get four EP groups, four PP groups, four DP groups, each containing exactly two ranks. Twenty lines and the entire process grid is wired.</p>
+
+    <figure class="breakout">
+      <img src="assets/subway.jpeg" alt="" />
+      <figcaption><em>every alltoall is, structurally, this &mdash; a platform, a thing that moves, then quiet again.</em></figcaption>
+    </figure>
+
+    <h2><span class="num">§ 03</span>A drop-in MoE, single-process first</h2>
+
+    <p>The MoE layer presents itself like a <code>Linear</code>. From outside it&rsquo;s just another module you stick into a Sequential:</p>
+
+<pre><code>layers = [
+    Linear(784, 128, activation=<span class="k">"relu"</span>),
+    MoE(in_dims=128, hidden_dims=64, out_dims=128,
+        n_experts=4, top_k=2, ep_comm=ep_comm),
+    Linear(128, 10, activation=<span class="k">None</span>),
+    Softmax(),
+    CrossEntropyLoss(batch_size=GLOBAL_BATCH_SIZE),
+]</code></pre>
+
+    <p>Inside it builds two things. A <strong>router</strong> &mdash; a small <code>Linear(in_dims, n_experts)</code> that scores how much each token wants each expert. And the <strong>experts</strong> themselves &mdash; copies of a 2-layer FFN, one per local expert. The &ldquo;local&rdquo; matters: if <code>ep_comm=None</code> or has size 1, this rank holds all the experts. If EP&nbsp;&gt;&nbsp;1, it holds only <code>n_experts / ep_size</code> of them.</p>
+
+    <p>There&rsquo;s a subtle bit that took some debugging. NumPy&rsquo;s <code>Linear</code> seeds itself deterministically from <code>(in_dims, out_dims)</code> only &mdash; same shape, same init &mdash; great for reproducibility but disastrous for MoE: every expert would be born identical, and the router would have no signal to discriminate. Fix: re-seed each expert from its global id, not its local index.</p>
+
+<pre><code>self.experts = [Sequential([
+    Linear(in_dims, hidden_dims, activation=<span class="k">"relu"</span>),
+    Linear(hidden_dims, out_dims, activation=<span class="k">None</span>),
+]) <span class="k">for</span> _ <span class="k">in</span> range(self.n_local_experts)]
+
+<span class="k">for</span> local_e, expert <span class="k">in</span> enumerate(self.experts):
+    global_e = local_e * self.ep_size + self.ep_rank
+    self._reinit_expert(expert, global_e)</code></pre>
+
+    <p>This is the small invariant that lets the EP-sharded run produce the same expert weights as a single-process run &mdash; expert 7 has the same weights whether it&rsquo;s the only expert on a rank, or one of sixteen on a single machine. We&rsquo;ll lean on that later when we test for correctness.</p>
+
+    <p>The constructor also tags every MoE-owned parameter with <code>_skip_ep_allreduce&nbsp;=&nbsp;True</code> when EP&nbsp;&gt;&nbsp;1. We&rsquo;ll come back to why a few sections from now &mdash; right now it&rsquo;s a sticker the gradient sync code reads later.</p>
+
+    <h3>The single-process forward</h3>
+
+    <p>The cleanest way to learn the EP path is to first see what it&rsquo;s mimicking. Without EP &mdash; single process, all experts on one rank &mdash; the entire MoE forward is three phases.</p>
+
+    <p><strong>Route.</strong> Run the router, softmax it, pick the top-<em>k</em> experts per token, and renormalise their gates so they sum to one:</p>
+
+<pre><code>gates = softmax(self.router(inputs))                    <span class="c"># (T, E)</span>
+top_k_idx = np.argsort(-gates, axis=-1, kind=<span class="k">"stable"</span>)[:, :k]
+top_k_gates_raw = gates[np.arange(T)[:, <span class="k">None</span>], top_k_idx]
+top_k_gates = top_k_gates_raw / top_k_gates_raw.sum(axis=-1, keepdims=<span class="k">True</span>)</code></pre>
+
+    <p><code>top_k_idx[t, j]</code> is &ldquo;the j-th best expert for token t.&rdquo; Renormalising the chosen gates turns the gated combine at the end into an honest convex combination, which keeps the activations from drifting weirdly.</p>
+
+    <p>The <code>kind=&quot;stable&quot;</code> is there for EP. With a stable sort, every rank breaks ties identically, so when several ranks see the same input they all reach the same routing decision. Without it, two ranks could disagree about which expert a borderline token wants &mdash; and then send it to two different places. Silent corruption. The stable sort costs nothing and rules that out.</p>
+
+    <p><strong>Dispatch.</strong> Walk over each expert, find the tokens routed to it, run them through, scatter the gated results back:</p>
+
+<pre><code>out = np.zeros((T, out_dims), dtype=np.float32)
+<span class="k">for</span> e <span class="k">in</span> range(E):
+    tok_idx, slot_idx = np.where(top_k_idx == e)
+    <span class="k">if</span> tok_idx.size &gt; capacity:
+        tok_idx, slot_idx = tok_idx[:capacity], slot_idx[:capacity]
+    expert_out = self.experts[e](inputs[tok_idx])
+    w = top_k_gates[tok_idx, slot_idx][:, <span class="k">None</span>]
+    np.add.at(out, tok_idx, expert_out * w)</code></pre>
+
+    <p><code>np.where(top_k_idx == e)</code> returns paired arrays of <code>(token row, slot column)</code> for every place expert <em>e</em> shows up in the top-<em>k</em> matrix. Capacity caps how many of those an expert is allowed to process &mdash; overflow drops silently to zero in <code>out</code>. And <code>np.add.at</code> is the unbuffered scatter-add, because the same token row can show up multiple times (once per expert it routed to) and ordinary <code>out[tok_idx] += ...</code> doesn&rsquo;t accumulate duplicates correctly.</p>
+
+    <p><strong>Auxiliary loss.</strong> Without help, the router collapses to &ldquo;always pick expert 0&rdquo; within a couple hundred steps. The fix is a tiny gradient signal that pushes routing toward uniformity:</p>
+
+<pre><code>counts = np.array([d[0].size <span class="k">for</span> d <span class="k">in</span> dispatch], dtype=np.float32)
+f = counts / max(n_assigned, 1)
+P = gates.mean(axis=0)
+aux_loss = self.aux_loss_coef * E * float((f * P).sum())</code></pre>
+
+    <p><em>f<sub>e</sub></em> is the fraction of routed slots that went to expert <em>e</em>. <em>P<sub>e</sub></em> is the mean gate probability for expert <em>e</em>. Multiply, sum across experts, and you get a quantity minimised at perfect balance (<em>f</em> = <em>P</em> = 1/E). The clever bit is that <em>f</em> is treated as a constant (it&rsquo;s a count, not differentiable), so all the gradient flows through <em>P</em> &mdash; which is exactly the lever we&rsquo;d want to pull to nudge things toward balance.</p>
+
+    <p>That&rsquo;s the whole single-process MoE. Forty lines, three phases. Now we make it talk over the network.</p>
+
+    <h2><span class="num">§ 04</span>Sharding the experts across ranks</h2>
+
+    <p>Here&rsquo;s where EP earns its name. Instead of one rank holding all the experts, every rank holds a slice &mdash; <code>n_experts / R</code> each. The router stays replicated on every rank (because every rank needs to make its own routing decisions for its own tokens), but the experts are spread out.</p>
+
+    <p>That means a token on rank 0 might want an expert that lives on rank 3. So we have to ship it. The single-process <code>for e in range(E)</code> loop becomes a six-step communication protocol:</p>
+
+<pre><code><span class="c">[locally]</span>
+  1. Run router; pick top-k experts per token.
+  2. For each (token, slot), figure out which rank owns the chosen expert.
+  3. Bucket tokens by destination rank.
+
+<span class="c">[over the network]</span>
+  4. Alltoallv: every rank ships its bucketed tokens to their destinations.
+
+<span class="c">[locally on the receiving rank]</span>
+  5. Group received tokens by local expert; apply capacity; run.
+
+<span class="c">[over the network]</span>
+  6. Reverse Alltoallv: ship raw expert outputs back to where they came from.
+
+<span class="c">[locally on the origin]</span>
+  7. Combine: weight by gate, scatter-add into the output.</code></pre>
+
+    <p>In code:</p>
+
+<pre><code>T_global = self.ep_comm.allreduce(T, op=MPI.SUM)
+capacity = int(np.ceil(self.capacity_factor * T_global * k / E))
+
+<span class="c"># routing &mdash; same as single-process</span>
+gates = softmax(self.router(inputs))
+top_k_idx = np.argsort(-gates, axis=-1, kind=<span class="k">"stable"</span>)[:, :k]
+<span class="c"># ... renormalize ...</span>
+
+<span class="c"># bucket by destination rank</span>
+dest_rank = top_k_idx % R
+send_tokens, send_local_eid, origin_idx = [], [], []
+<span class="k">for</span> dr <span class="k">in</span> range(R):
+    mask = (dest_rank == dr)
+    t_idx, slot_idx = np.where(mask)
+    local_eid = (top_k_idx[t_idx, slot_idx] // R).astype(np.int32)
+    send_tokens.append(inputs[t_idx])
+    send_local_eid.append(local_eid)
+    origin_idx.append(np.stack([t_idx, slot_idx], axis=-1))
+
+<span class="c"># ship the tokens (and a bit of metadata)</span>
+recv_tokens    = alltoallv_v(self.ep_comm, send_tokens,    np.float32)
+recv_local_eid = alltoallv_v(self.ep_comm, send_local_eid, np.int32)
+all_tokens    = np.concatenate(recv_tokens, axis=0)
+all_local_eid = np.concatenate(recv_local_eid, axis=0)
+sources = np.concatenate([np.full(t.shape[0], s) <span class="k">for</span> s, t <span class="k">in</span> enumerate(recv_tokens)])
+
+<span class="c"># run experts that live on this rank</span>
+out_per_recv = np.zeros((all_tokens.shape[0], out_dims), dtype=np.float32)
+<span class="k">for</span> local_e <span class="k">in</span> range(self.n_local_experts):
+    sel = np.where(all_local_eid == local_e)[0]
+    <span class="k">if</span> sel.size &gt; capacity:
+        sel = sel[:capacity]
+    out_per_recv[sel] = self.experts[local_e](all_tokens[sel])
+
+<span class="c"># ship the outputs back</span>
+send_back = [out_per_recv[sources == s] <span class="k">for</span> s <span class="k">in</span> range(R)]
+recv_back = alltoallv_v(self.ep_comm, send_back, np.float32)
+
+<span class="c"># combine on origin</span>
+out = np.zeros((T, out_dims), dtype=np.float32)
+<span class="k">for</span> dr <span class="k">in</span> range(R):
+    oi = origin_idx[dr]
+    <span class="k">if</span> oi.shape[0] == 0: <span class="k">continue</span>
+    t_idx, slot_idx = oi[:, 0], oi[:, 1]
+    w = top_k_gates[t_idx, slot_idx][:, <span class="k">None</span>]
+    np.add.at(out, t_idx, recv_back[dr] * w)</code></pre>
+
+    <p>Three pieces of bookkeeping carry the whole thing. <code>origin_idx[dr]</code> remembers, for each destination rank, which local <code>(token, slot)</code> pairs we shipped to it &mdash; these never travel over the wire, they&rsquo;re our breadcrumbs for putting results back where they belong. <code>sources</code> records, for each row of <code>all_tokens</code> we received, which rank originally sent it &mdash; used in step 6 to slice the outputs correctly per destination. And <code>local_eid = global_eid // R</code> translates between the global expert space (<code>0..E-1</code>) and the local one (<code>0..E/R-1</code>) the receiving rank actually has.</p>
+
+    <p>Capacity is computed against <code>T_global</code>, not the local <code>T</code>. That&rsquo;s a one-int <code>Allreduce</code> per forward and it&rsquo;s the difference between EP-and-single-process dropping the same tokens vs. dropping different tokens. It also costs nothing.</p>
+
+    <p>Per MoE forward, then: three Alltoallvs and one Allreduce-of-an-int. That&rsquo;s the full network bill.</p>
+
+    <h3>Variable-size all-to-all, in two parts</h3>
+
+    <p><code>Alltoallv</code> is the variable-size all-to-all primitive &mdash; every pair of ranks can exchange a different number of elements. mpi4py exposes it as a C-flavoured call you have to feed packed buffers, per-destination counts, and offsets. Manageable, but fiddly. The <code>alltoallv_v</code> helper hides the packing:</p>
+
+<pre><code><span class="k">def</span> alltoallv_v(comm, send_chunks, dtype=np.float32):
+    R = comm.Get_size()
+    <span class="c"># ... infer trailing shape, build sendcounts, pack sendbuf ...</span>
+
+    recvcounts = np.empty(R, dtype=np.int32)
+    comm.Alltoall(sendcounts, recvcounts)        <span class="c"># &larr; pass 1: counts</span>
+    rdispls = np.zeros(R, dtype=np.int32)
+    rdispls[1:] = np.cumsum(recvcounts[:-1])
+    recvbuf = np.empty(int(recvcounts.sum()), dtype=dtype)
+
+    comm.Alltoallv(                               <span class="c"># &larr; pass 2: payload</span>
+        [sendbuf, sendcounts, sdispls, MPI.FLOAT],
+        [recvbuf, recvcounts, rdispls, MPI.FLOAT],
+    )
+    <span class="c"># ... unpack into per-source list of arrays ...</span>
+    <span class="k">return</span> recv_chunks</code></pre>
+
+    <p>The interesting thing is that this is two MPI calls, not one. The receiving ranks don&rsquo;t know how much is coming until they&rsquo;re told &mdash; somebody has to tell them &mdash; so we do a small fixed-size <code>Alltoall</code> of just the byte counts, then the actual variable-size <code>Alltoallv</code> of the payload. Two collectives where you might expect one.</p>
+
+    <p>These two collectives have very different cost profiles. The counts exchange is small and latency-bound: a handful of ints, dominated by the round-trip time. The payload exchange is bandwidth-bound: many megabytes of token activations, dominated by network throughput. When you start optimising EP, this distinction matters &mdash; the latency-bound piece is what you want to fold into compute via async, the bandwidth-bound piece is what wants bigger chunks.</p>
+
+    <h3>The same dance, in reverse</h3>
+
+    <p>Backward mirrors forward almost exactly. Two more Alltoallvs in the opposite directions. The renormalize&ndash;softmax&ndash;router chain stays purely local on origin. And there&rsquo;s one extra collective at the end that forward doesn&rsquo;t have.</p>
+
+    <p>The whole thing in order:</p>
+
+    <ol>
+      <li>Origin: compute the gate gradient locally (it has <code>expert_outs</code> cached from forward).</li>
+      <li>Origin: prepare <code>d_expert_out = dout &middot; gate</code>, queue it per destination.</li>
+      <li>Alltoallv: ship <code>d_expert_out</code> to where the expert lives.</li>
+      <li>Receiver: run <code>expert.backward()</code> on the routed slice.</li>
+      <li>Alltoallv (reverse): ship <code>d_input</code> back to where the tokens came from.</li>
+      <li>Origin: scatter <code>d_input</code> into the right rows.</li>
+      <li>Origin: backprop through renormalize &rarr; softmax &rarr; router (purely local).</li>
+      <li>Allreduce router grads across <code>ep_comm</code>.</li>
+    </ol>
+
+    <p>The gate gradient in step 1 falls out of differentiating <code>out[t] = &Sigma;_j gate[t,j] &middot; expert_out[t,j]</code> with respect to <code>gate[t,j]</code>. It&rsquo;s an inner product over the output dimension:</p>
+
+<pre><code>d_top_k_gates[t_idx, slot_idx] += (d_out_e * ob).sum(axis=-1)</code></pre>
+
+    <p><code>d_out_e</code> is <code>dout[t_idx]</code>, <code>ob</code> is the cached <code>recv_back[dr]</code> from forward &mdash; the wire-roundtripped expert outputs. We need them on the origin side because that&rsquo;s where the router lives, that&rsquo;s where the gate gradient ultimately gets used.</p>
+
+    <p>Step 8 is the one piece backward has that forward doesn&rsquo;t:</p>
+
+<pre><code><span class="k">for</span> p <span class="k">in</span> self.router.parameters():
+    <span class="k">if</span> p.requires_grad:
+        self.ep_comm.Allreduce(MPI.IN_PLACE, p.grad, op=MPI.SUM)</code></pre>
+
+    <p>The router is replicated across <code>ep_comm</code> peers &mdash; every rank has identical router weights. Each rank computed the gradient from its own slice of tokens; summing those slices across EP reconstructs the full global gradient. SUM, not mean. Each rank&rsquo;s gradient is already its share, scaled correctly because the loss divides by the global batch size up front. Summing gives the right answer; dividing afterwards would give the average, which is wrong by a factor of <code>ep_size</code>.</p>
+
+    <blockquote>This is the bug that did exist in an early version of this codebase, undetected for a while because the equivalence test only asserted &ldquo;all peers agree&rdquo; &mdash; and Allreduce makes that true regardless of whether you divide or not. Tightening the test to assert &ldquo;EP gradient equals the single-process reference&rdquo; caught it instantly. The lesson: in distributed code, &ldquo;all ranks agree on the wrong answer&rdquo; is a class of bug that demands a stronger oracle than peer comparison.</blockquote>
+
+    <figure class="breakout">
+      <img src="assets/cinematic.jpg" alt="" />
+      <figcaption><em>all this, eventually, just to multiply some matrices.</em></figcaption>
+    </figure>
+
+    <h2><span class="num">§ 05</span>Three reduction rules, one little tag</h2>
+
+    <p>Now the part that&rsquo;s actually the most subtle &mdash; gradient sync when DP and EP and PP all stack on top of each other.</p>
+
+    <p>Different parameter classes need different reductions:</p>
+
+    <table class="reductions">
+      <thead>
+        <tr><th>Parameter</th><th>Replicated across</th><th>Has to sum over</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Router (in MoE)</td><td>DP &times; EP</td><td>DP and EP both</td></tr>
+        <tr><td>Experts (in MoE)</td><td>DP only &mdash; different EP ranks own different experts</td><td>DP only</td></tr>
+        <tr><td>Other dense layers (the surrounding Linears)</td><td>DP &times; EP</td><td>DP and EP both</td></tr>
+      </tbody>
+    </table>
+
+    <p>Three different reductions over three different sub-communicators is messy if you implement it directly. The cleaner thing is to use a single tag, set at construction time:</p>
+
+<pre><code><span class="k">if</span> self.ep_size &gt; 1:
+    <span class="k">for</span> p <span class="k">in</span> self.router.parameters():
+        p._skip_ep_allreduce = <span class="k">True</span>
+    <span class="k">for</span> expert <span class="k">in</span> self.experts:
+        <span class="k">for</span> p <span class="k">in</span> expert.parameters():
+            p._skip_ep_allreduce = <span class="k">True</span></code></pre>
+
+    <p>Every MoE-owned parameter &mdash; router and experts both &mdash; gets stamped. Then the post-grad hook in <code>pipe.py</code> reads it:</p>
+
+<pre><code><span class="k">def</span> backprop_block_and_ep_allreduce(ep_comm, params):
+    <span class="c"># First wait for all the DP allreduces to finish</span>
+    MPI.Request.Waitall([p._request <span class="k">for</span> p <span class="k">in</span> params <span class="k">if</span> p._request <span class="k">is not None</span>])
+
+    <span class="c"># Then sweep EP allreduce, but only for params not tagged</span>
+    <span class="k">if</span> ep_comm <span class="k">and</span> ep_comm.Get_size() &gt; 1:
+        <span class="k">for</span> p <span class="k">in</span> params:
+            <span class="k">if not</span> p.requires_grad: <span class="k">continue</span>
+            <span class="k">if</span> getattr(p, <span class="k">"_skip_ep_allreduce"</span>, <span class="k">False</span>): <span class="k">continue</span>
+            ep_comm.Allreduce(MPI.IN_PLACE, p.grad, op=MPI.SUM)</code></pre>
+
+    <p>The DP allreduce already happened (asynchronously, overlapped with backward). This hook fires after backward is done. It waits for DP to finish, then walks every parameter and EP-allreduces the ones without the tag.</p>
+
+    <p>What each parameter class actually gets:</p>
+
+    <ul>
+      <li>A regular <code>Linear</code> outside the MoE has no tag, so it gets the DP allreduce <em>and</em> the EP allreduce &rarr; summed across both axes. &#10003;</li>
+      <li>An expert&rsquo;s parameters have the tag, so they get the DP allreduce but no EP allreduce &rarr; summed across DP only, which is what we want because different EP ranks have different experts. &#10003;</li>
+      <li>The router is tagged too, so it gets DP allreduce here. But the router also got an EP allreduce inside <code>_backward_ep</code> (step 8). So the router ends up summed across both axes through two different code paths. &#10003;</li>
+    </ul>
+
+    <p>Three lines of tagging, one branch in the hook, no extra communicators. Every parameter ends up correctly synchronised regardless of how the world is sliced.</p>
+
+    <figure class="breakout">
+      <img src="assets/storm.jpg" alt="" />
+      <figcaption><em>the network is mostly weather. you build on it anyway.</em></figcaption>
+    </figure>
+
+    <h2><span class="num">§ 06</span>What this is, what it isn&rsquo;t</h2>
+
+    <p>That&rsquo;s the whole implementation. About three hundred lines of NumPy and mpi4py, two MPI primitives doing the heavy lifting (<code>Send</code>/<code>Recv</code> for PP, <code>Alltoallv</code> for EP), one parameter tag handling all the gradient-sync distinctions, one verification harness keeping it honest.</p>
+
+    <p>It runs on CPU instead of GPU, blocks during the alltoalls instead of overlapping them with compute, and dispatches each expert as a separate NumPy call instead of fusing them into one matmul. Those three things are most of why production EP is fast &mdash; and none of them change the algorithm. Bucket, ship, run, ship back, combine, regardless of substrate.</p>
+
+    <p>If you want the production version, look at <a href="https://github.com/NVIDIA/Megatron-LM">Megatron-LM</a>&rsquo;s MoE path or <a href="https://github.com/microsoft/DeepSpeed">DeepSpeed-MoE</a> &mdash; both written for GPU and NCCL, both with the overlap and fusion this implementation skips. Once you&rsquo;ve watched the six-step protocol happen in three hundred lines of NumPy, the production code stops feeling like magic.</p>
+
+    <p>Code is at <a href="https://github.com/ved1beta/GPU-sanghathan">github.com/ved1beta/GPU-sanghathan</a>. The EP path is in <code>moe.py</code>; the equivalence test is <code>tests/test_moe_ep.py</code>. Start at the test, then chase imports.</p>
+
+    <div class="endnote">
+      <div>&mdash; ved &middot; may 2026 &middot; <a href="/">back to portfolio</a></div>
+      <div>find me at x/@ant_vedaya &middot; github/ved1beta &middot; ved@axolotl.ai</div>
+      <div style="margin-top: 14px; color: #444;">if you&rsquo;re working on MoE training infra &mdash; production or toy &mdash; i&rsquo;d be glad to compare notes.</div>
+    </div>
+  </article>
+</div>
+
+</body>
+</html>

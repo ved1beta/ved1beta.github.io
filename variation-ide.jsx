@@ -12,6 +12,7 @@ function CmdK({ open, onClose, onNav }) {
     { id: "projects/",     label: "projects",              kind: "page" },
     { id: "prs/",          label: "prs — open source merged work", kind: "page" },
     { id: "blog/",          label: "blog — index",          kind: "page" },
+    { id: "blog/moe-ep.md", label: "expert parallelism in 300 lines of numpy", kind: "post" },
     { id: "blog/mxfp4.md",  label: "mxfp4, end-to-end",     kind: "post" },
     { id: "blog/engram.md", label: "engram — conditional memory via scalable lookup", kind: "post" },
     { id: "contact",       label: "contact",               kind: "page" },
@@ -90,6 +91,7 @@ function VariationIDE() {
     { id: "projects/",      label: "projects/",     group: "dir" },
     { id: "prs/",           label: "prs/",          group: "dir" },
     { id: "blog/",          label: "blog/",         group: "dir" },
+    { id: "blog/moe-ep.md", label: "  moe-ep.md",   group: "nested" },
     { id: "blog/mxfp4.md",  label: "  mxfp4-end-to-end.md", group: "nested" },
     { id: "blog/engram.md", label: "  engram.md",   group: "nested" },
     { id: "contact",       label: "contact",       group: "" },
@@ -165,8 +167,9 @@ function IDEContent({ active, onNav }) {
   if (active === "projects/") return <ProjectsDoc />;
   if (active === "prs/") return <PRsDoc />;
   if (active === "blog/") return <BlogIndexDoc />;
-  if (active === "blog/mxfp4.md") return <BlogPostDoc post={POSTS[0]} />;
-  if (active === "blog/engram.md") return <BlogPostDoc post={POSTS[1]} />;
+  if (active === "blog/moe-ep.md") return <BlogPostDoc post={POSTS.find(p => p.slug === "moe-ep")} />;
+  if (active === "blog/mxfp4.md") return <BlogPostDoc post={POSTS.find(p => p.slug === "mxfp4-end-to-end")} />;
+  if (active === "blog/engram.md") return <BlogPostDoc post={POSTS.find(p => p.slug === "engram")} />;
   if (active === "contact") return <ContactDoc />;
   return <ReadmeDoc onNav={onNav} />;
 }
@@ -640,6 +643,7 @@ function PRsDoc() {
 }
 
 const POST_URL = {
+  "moe-ep":           "moe-ep-blog.html",
   "mxfp4-end-to-end": "blog.html",
   "engram":           "engram-blog.html",
 };

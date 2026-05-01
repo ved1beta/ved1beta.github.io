@@ -81,13 +81,21 @@ const PROJECTS = [
 
 const POSTS = [
   {
+    slug: "moe-ep",
+    title: "Expert Parallelism, in 300 Lines of NumPy",
+    sub: "What MoE training actually looks like when you implement it in mpi4py",
+    date: "2026-05-01",
+    read: "10 min",
+    tags: ["moe", "parallelism", "systems"],
+    featured: true,
+  },
+  {
     slug: "mxfp4-end-to-end",
     title: "MXFP4, End-to-End",
     sub: "How a 4-bit recipe travels from pytorch/ao to Axolotl",
     date: "2026-04-18",
     read: "14 min",
     tags: ["quantization", "qat", "systems"],
-    featured: true,
   },
   {
     slug: "engram",
