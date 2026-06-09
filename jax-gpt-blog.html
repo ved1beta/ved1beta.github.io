@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trained a tiny GPT in JAX, and the framework kept surprising me, ved1beta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0a0a; --surface: #121212; --border: #1f1f1f;
+    --fg: #e8e8e3; --fg-dim: #b8b8b3; --muted: #6a6a66;
+    --accent: #a3e635;
+    --sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+    --serif: "Instrument Serif", Georgia, serif;
+  }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:var(--sans); }
+  * { box-sizing: border-box; }
+  ::selection { background: color-mix(in oklab, var(--accent) 35%, transparent); color: var(--fg); }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in oklab, var(--accent) 40%, transparent); }
+  a:hover { border-bottom-color: var(--accent); }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 32px 140px; }
+  .topbar { display:flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .6px; text-transform: uppercase; max-width: 1200px; margin: 0 auto; padding: 20px 32px; border-bottom: 1px solid var(--border); }
+  .topbar a { color: var(--fg-dim); border: none; }
+  .topbar a:hover { color: var(--accent); }
+
+  .meta { font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: .4px; display: flex; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; }
+  .meta .dot { color: #333; }
+
+  h1.title { font-size: 56px; font-weight: 400; letter-spacing: -1.2px; line-height: 1.04; margin: 0; text-wrap: balance; }
+  .dek { font-family: var(--serif); font-style: italic; font-size: 26px; color: var(--fg-dim); line-height: 1.35; margin-top: 18px; text-wrap: pretty; }
+  .author-card { display: flex; align-items: center; gap: 14px; margin-top: 36px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+  .author-card img { width: 44px; height: 44px; border-radius: 999px; object-fit: cover; border: 1px solid var(--border); filter: grayscale(0.15) contrast(1.02); }
+  .author-card .info { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .author-card .info a { color: var(--fg-dim); border: none; }
+  .author-card .info a:hover { color: var(--accent); }
+
+  article p { font-size: 17.5px; line-height: 1.75; color: #d8d8d3; margin: 22px 0; text-wrap: pretty; }
+  article h2 { font-size: 28px; font-weight: 400; letter-spacing: -.4px; margin: 72px 0 4px; line-height: 1.2; }
+  article h2 .num { font-family: var(--mono); font-size: 12px; color: var(--accent); display: block; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  article h3 { font-size: 20px; font-weight: 500; margin: 44px 0 -6px; color: var(--fg); }
+
+  article code { font-family: var(--mono); font-size: 14.5px; color: var(--accent); background: color-mix(in oklab, var(--accent) 6%, transparent); padding: 1px 6px; border-radius: 3px; }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; overflow: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.7; color: #d0d0cb; }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+  pre .k { color: var(--accent); }
+  pre .c { color: var(--muted); font-style: italic; }
+
+  blockquote { border-left: 2px solid var(--accent); margin: 28px 0; padding: 4px 0 4px 20px; color: var(--fg-dim); font-family: var(--serif); font-style: italic; font-size: 19px; line-height: 1.55; }
+
+  .ornament { display:flex; justify-content: center; margin: 48px 0; color: var(--muted); letter-spacing: 8px; font-family: var(--mono); font-size: 12px; }
+  .results { width: 100%; border-collapse: collapse; margin: 32px 0; font-family: var(--mono); font-size: 13px; }
+  .results th { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--muted); font-weight: 400; font-size: 10.5px; letter-spacing: .8px; text-transform: uppercase; }
+  .results td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--fg-dim); }
+  .results tr:last-child td { border-bottom: none; }
+  .results td:first-child { color: var(--fg); }
+
+  .endnote { margin-top: 120px; padding-top: 36px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 12.5px; color: var(--muted); line-height: 1.8; }
+  .tag-row { display:flex; gap: 8px; flex-wrap: wrap; }
+  .tag { font-family: var(--mono); font-size: 10.5px; color: var(--muted); border: 1px solid var(--border); padding: 3px 8px; border-radius: 3px; letter-spacing: .5px; text-transform: uppercase; }
+
+  @media (max-width: 700px) { h1.title { font-size: 42px; } .dek { font-size: 20px; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/">← ved1beta</a>
+  <div>essay · 2026</div>
+</div>
+
+<div class="wrap">
+  <article>
+    <div class="meta">
+      <span>2026-06-09</span><span class="dot">·</span>
+      <span>8 min read</span><span class="dot">·</span>
+      <span>Notebook essay</span><span class="dot">·</span>
+      <span class="tag-row"><span class="tag">jax</span><span class="tag">equinox</span><span class="tag">optax</span></span>
+    </div>
+
+    <h1 class="title">Trained a tiny GPT in JAX, and the framework kept surprising me</h1>
+    <div class="dek">A 10M-parameter character-level GPT, six layers deep, trained on TinyShakespeare. The math was familiar; the shape of the code was not.</div>
+    <div class="author-card">
+      <img src="assets/headshot.jpeg" alt="Ved" />
+      <div class="info">
+        <div>by <a href="/">Ved</a> · systems engineer at Axolotl AI</div>
+        <div>github / <a href="https://github.com/ved1beta">ved1beta</a> · x / @ant_vedaya</div>
+      </div>
+    </div>
+
+    <p>The goal was deliberately small: a transformer tiny enough to read in one sitting, but real enough to train. I wrote a 10M-parameter character-level GPT in JAX with Equinox and Optax, pointed it at TinyShakespeare, and let it run. The architecture was not the surprise. What kept catching me off guard was how functional the framework feels once you stop thinking in modules and start thinking in pure operations over trees of arrays.</p>
+
+    <p>The first thing that threw me, coming from PyTorch, was that the model has no batch dimension. I write the forward pass for one sequence and then add the batch from the outside in one line:</p>
+
+<pre><code><span class="k">logits</span> = jax.vmap(<span class="k">lambda</span> i, k: model(i, k, inference))(x, keys)  <span class="c"># (B, T, vocab)</span></code></pre>
+
+    <p>That feels backwards at first, and then it stops feeling backwards at all. The body of the model reads like the equations because there are no batch axes cluttering it up. And when I want to spread the same code across devices later, the model itself does not change; I swap the mapping transform at the boundary.</p>
+
+    <h2>The model is just data</h2>
+
+    <p>An Equinox module is a PyTree whose leaves are the weight arrays, with configuration sitting next to them as plain Python values. Once that clicks, a lot of everyday PyTorch habits stop making sense. Parameter groups are no longer a string-matching chore. I want weight decay on matrices but not on biases or norms, so I ask each leaf whether it is at least rank-2:</p>
+
+<pre><code><span class="k">wd_mask</span> = <span class="k">lambda</span> m: jax.tree_util.tree_map(<span class="k">lambda</span> p: p.ndim &gt;= 2, m)</code></pre>
+
+    <p>That is the same model metadata I would usually chase through named parameters and special cases, except here it is just a predicate over a tree. It is simpler, but also more honest about what the code is doing.</p>
+
+    <h2>Mixed precision is a cast</h2>
+
+    <p>My favorite part is mixed precision, because there is no global mode to turn on. I keep the master weights in float32, do the big matmuls in bfloat16, and make the cast explicit inside the function I differentiate:</p>
+
+<pre><code><span class="k">cmodel</span> = _to_dtype(model, jnp.bfloat16)
+logits = jax.vmap(...)(x, keys).astype(jnp.float32)</code></pre>
+
+    <p>The important bit is that the gradients still come back in float32 on their own. I do not keep a second copy of the weights around. There is no optimizer-side bookkeeping for precision state. The types and autodiff sort it out between them. And because bfloat16 keeps float32’s exponent range, the loss-scaling dance that usually comes with float16 never shows up.</p>
+
+    <h2>Attention is one call</h2>
+
+    <p>Self-attention is equally blunt:</p>
+
+<pre><code><span class="k">out</span> = jax.nn.dot_product_attention(q, k, v, is_causal=<span class="k">True</span>)</code></pre>
+
+    <p>The naive version builds the full score matrix, which scales as the square of sequence length and spends most of its time moving memory around. This call does not build that matrix. On GPU it drops to a single flash-attention kernel, and the causal mask is just a flag instead of a dense tensor full of negative infinities.</p>
+
+    <p>That is the recurring pattern in JAX: the framework keeps asking me to express intent, not machinery. I do not describe the implementation path. I describe the operation, and the compiler figures out a much better path than I would have written by hand.</p>
+
+    <div class="ornament">· · ·</div>
+
+    <h2>Staying on the compiler’s good side</h2>
+
+    <p>The rest of the training loop is an exercise in respecting the compiler. <code>jit</code> turns the step into one compiled graph, so every trip back into Python costs you. I keep the data on device and grab batches inside the compiled step so nothing gets copied each iteration. Dispatch is async, so I only pull the loss back to the host every so often. Read it every step and you stall the pipeline waiting on the host. The step also donates its buffers, so the updated weights reuse the same memory.</p>
+
+    <p>That all sounds like plumbing, but the effect is conceptual as much as it is performance-related. The compiler is not an afterthought here. It is part of the programming model.</p>
+
+    <h2>How it went</h2>
+
+    <p>Five thousand steps took about 44 minutes. The loss starts at about ln(65) ≈ 4.17, exactly random guessing over 65 characters, and drops quickly.</p>
+
+    <table class="results">
+      <thead>
+        <tr><th>step</th><th>train</th><th>val</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>0</td><td>4.32</td><td>4.30</td></tr>
+        <tr><td>500</td><td>2.13</td><td>2.22</td></tr>
+        <tr><td>1000</td><td>1.61</td><td>1.80</td></tr>
+        <tr><td>2000</td><td>1.32</td><td>1.58</td></tr>
+        <tr><td>3000</td><td>1.20</td><td>1.55</td></tr>
+        <tr><td>5000</td><td>1.09</td><td>1.54</td></tr>
+      </tbody>
+    </table>
+
+    <p>Watch the gap. The training and validation losses fall together until about step 3000, then split: training keeps sliding down while validation parks itself around 1.54. That is the model starting to memorize the training text instead of learning anything that transfers. For 10M parameters on roughly a million characters, it is exactly where I would expect it to land.</p>
+
+    <p>Here is a sample from the checkpoint after that run:</p>
+
+    <blockquote>
+      A wrong as made now a dancing to beguiled a senator:<br />
+      ...<br />
+      ISABELLA:<br />
+      O God! go time, faith, be bloody of son,<br />
+      Which being th
+    </blockquote>
+
+    <p>The words are made up, but the shape is right: capitalized speaker labels, line breaks, punctuation in the right places, the rhythm of verse, even real character names. It nailed the form before it had any shot at meaning. At this size, that is the whole point.</p>
+
+    <div class="endnote">
+      <div>notebook · <a href="https://colab.research.google.com/drive/1jFcsqInnkVsK7n8978lMyK-474nY_DjN?usp=sharing" target="_blank" rel="noreferrer">colab</a></div>
+      <div>ved · june 2026 · <a href="/">back to portfolio</a></div>
+      <div>tiny GPT · JAX · Equinox · Optax · TinyShakespeare</div>
+    </div>
+  </article>
+</div>
+
+</body>
+</html>

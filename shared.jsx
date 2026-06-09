@@ -81,6 +81,15 @@ const PROJECTS = [
 
 const POSTS = [
   {
+    slug: "tiny-gpt-jax",
+    title: "Trained a tiny GPT in JAX, and the framework kept surprising me",
+    sub: "A 10M-parameter character GPT in Equinox and Optax, trained on TinyShakespeare",
+    date: "2026-06-09",
+    read: "8 min",
+    tags: ["jax", "gpt", "frameworks"],
+    featured: true,
+  },
+  {
     slug: "moe-ep",
     title: "Expert Parallelism, in 300 Lines of NumPy",
     sub: "What MoE training actually looks like when you implement it in mpi4py",
