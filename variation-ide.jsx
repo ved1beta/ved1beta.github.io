@@ -12,6 +12,8 @@ function CmdK({ open, onClose, onNav }) {
     { id: "projects/",     label: "projects",              kind: "page" },
     { id: "prs/",          label: "prs — open source merged work", kind: "page" },
     { id: "blog/",          label: "blog — index",          kind: "page" },
+    { id: "blog/moe-fp32.md",        label: "127 gib \u2192 18 gib \u2014 fine-tuning a frontier moe on one gpu", kind: "post" },
+    { id: "blog/expert-parallel.md", label: "expert parallelism in axolotl \u2014 deepep", kind: "post" },
     { id: "blog/tiny-gpt-jax.md", label: "trained a tiny gpt in jax", kind: "post" },
     { id: "blog/moe-ep.md", label: "expert parallelism in 300 lines of numpy", kind: "post" },
     { id: "blog/mxfp4.md",  label: "mxfp4, end-to-end",     kind: "post" },
@@ -92,6 +94,8 @@ function VariationIDE() {
     { id: "projects/",      label: "projects/",     group: "dir" },
     { id: "prs/",           label: "prs/",          group: "dir" },
     { id: "blog/",          label: "blog/",         group: "dir" },
+    { id: "blog/moe-fp32.md",        label: "  moe-fp32-census.md",        group: "nested" },
+    { id: "blog/expert-parallel.md", label: "  expert-parallel-deepep.md", group: "nested" },
     { id: "blog/tiny-gpt-jax.md", label: "  tiny-gpt-jax.md", group: "nested" },
     { id: "blog/moe-ep.md", label: "  moe-ep.md",   group: "nested" },
     { id: "blog/mxfp4.md",  label: "  mxfp4-end-to-end.md", group: "nested" },
@@ -169,6 +173,8 @@ function IDEContent({ active, onNav }) {
   if (active === "projects/") return <ProjectsDoc />;
   if (active === "prs/") return <PRsDoc />;
   if (active === "blog/") return <BlogIndexDoc />;
+  if (active === "blog/moe-fp32.md")        return <BlogPostDoc post={POSTS.find(p => p.slug === "moe-fp32-census")} />;
+  if (active === "blog/expert-parallel.md") return <BlogPostDoc post={POSTS.find(p => p.slug === "expert-parallel-deepep")} />;
   if (active === "blog/tiny-gpt-jax.md") return <BlogPostDoc post={POSTS.find(p => p.slug === "tiny-gpt-jax")} />;
   if (active === "blog/moe-ep.md") return <BlogPostDoc post={POSTS.find(p => p.slug === "moe-ep")} />;
   if (active === "blog/mxfp4.md") return <BlogPostDoc post={POSTS.find(p => p.slug === "mxfp4-end-to-end")} />;
@@ -646,6 +652,8 @@ function PRsDoc() {
 }
 
 const POST_URL = {
+  "moe-fp32-census":        "moe-fp32-blog.html",
+  "expert-parallel-deepep": "expert-parallel-blog.html",
   "tiny-gpt-jax":    "jax-gpt-blog.html",
   "moe-ep":           "moe-ep-blog.html",
   "mxfp4-end-to-end": "blog.html",
@@ -662,7 +670,7 @@ function BlogIndexDoc() {
           const href = POST_URL[p.slug];
           const inner = (
             <div style={{ padding: "20px 0", borderTop: "1px solid var(--border)" }}>
-              <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--muted)" }}>{p.date} · {p.read} · {p.tags.join(", ")} {!href && <span style={{ color: "#444" }}>· draft</span>}</div>
+              <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--muted)" }}>{p.date} · {p.read} · {p.tags.join(", ")} {p.source && <span>· {p.source}</span>} {!href && <span style={{ color: "#444" }}>· draft</span>}</div>
               <div style={{ fontSize: 20, marginTop: 8 }}>{p.title} {p.featured && <Tag accent>featured</Tag>}</div>
               <div style={{ fontSize: 14, color: "var(--muted)", marginTop: 4 }}>{p.sub}</div>
             </div>
@@ -682,12 +690,13 @@ function BlogPostDoc({ post }) {
   return (
     <div style={{ maxWidth: 720 }}>
       {docHeader("# blog/" + post.slug + ".md")}
-      <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--muted)" }}>{post.date} · {post.read}</div>
+      <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--muted)" }}>{post.date} · {post.read}{post.source && <span> · {post.source}</span>}</div>
       <h2 style={{ fontSize: 40, fontWeight: 400, letterSpacing: -0.8, margin: "16px 0 0", lineHeight: 1.1 }}>{post.title}</h2>
       <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 19, color: "var(--fg-dim)", marginTop: 10 }}>{post.sub}</div>
       {href ? (
         <div style={{ marginTop: 24 }}>
           <a href={href} style={{ color: "var(--accent)", fontFamily: "var(--mono)", fontSize: 12, textDecoration: "none" }}>OPEN FULL ESSAY →</a>
+          {post.canonical && <a href={post.canonical} target="_blank" rel="noreferrer" style={{ marginLeft: 18, color: "var(--fg-dim)", fontFamily: "var(--mono)", fontSize: 12, textDecoration: "none" }}>ORIGINAL ON {post.source.toUpperCase()} ↗</a>}
         </div>
       ) : (
         <p style={{ marginTop: 20, color: "var(--muted)", fontSize: 14 }}>Draft — not yet published.</p>

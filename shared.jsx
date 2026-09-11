@@ -81,6 +81,27 @@ const PROJECTS = [
 
 const POSTS = [
   {
+    slug: "moe-fp32-census",
+    title: "127 GiB \u2192 18 GiB: Fine-Tuning a Frontier MoE on a Single GPU",
+    sub: "Modern MoE checkpoints quietly load their experts in fp32 \u2014 why, and the one config line that fixes it",
+    date: "2026-09-11",
+    read: "9 min",
+    tags: ["moe", "qlora", "transformers-v5"],
+    source: "Axolotl Engineering",
+    canonical: null, // TODO: Axolotl blog URL once live
+    featured: true,
+  },
+  {
+    slug: "expert-parallel-deepep",
+    title: "Expert Parallelism in Axolotl",
+    sub: "DeepEP\u2019s fused all-to-all kernels, and how EP composes with FSDP and context parallelism",
+    date: "2026-09-11",
+    read: "6 min",
+    tags: ["moe", "deepep", "nd-parallelism"],
+    source: "Axolotl Engineering",
+    canonical: null, // TODO: Axolotl blog URL once live
+  },
+  {
     slug: "tiny-gpt-jax",
     title: "Trained a tiny GPT in JAX, and the framework kept surprising me",
     sub: "A 10M-parameter character GPT in Equinox and Optax, trained on TinyShakespeare",
