@@ -81,6 +81,15 @@ const PROJECTS = [
 
 const POSTS = [
   {
+    slug: "nanospec",
+    title: "Nanospec: a spec decoding engine in under 3k lines",
+    sub: "Paged KV, continuous batching, CUDA graphs, EAGLE-3 trees \u2014 and why bf16 ties are the real enemy of bit-exact tests",
+    date: "2026-09-17",
+    read: "12 min",
+    tags: ["spec-decoding", "inference", "flashinfer"],
+    featured: true,
+  },
+  {
     slug: "moe-fp32-census",
     title: "127 GiB \u2192 18 GiB: Fine-Tuning a Frontier MoE on a Single GPU",
     sub: "Modern MoE checkpoints quietly load their experts in fp32 \u2014 why, and the one config line that fixes it",

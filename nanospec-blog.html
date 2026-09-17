@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nanospec — ved1beta</title>
+<meta name="theme-color" content="#f7f7f4" />
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0a0a; --surface: #121212; --border: #1f1f1f;
+    --fg: #e8e8e3; --fg-dim: #b8b8b3; --muted: #6a6a66;
+    --fg-body: #d8d8d3; --fg-code: #d0d0cb; --faint: #444;
+    --accent: #a3e635;
+    --sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+    --serif: "Instrument Serif", Georgia, serif;
+  }
+  :root[data-theme="light"]{
+    --bg: #f7f7f4; --surface: #ffffff; --border: #e3e3dc;
+    --fg: #161615; --fg-dim: #44443f; --muted: #7b7b74;
+    --fg-body: #2a2a27; --fg-code: #2f2f2c; --faint: #c9c9c2;
+    --accent: #4d7c0f;
+  }
+  html { transition: background 160ms ease, color 160ms ease; }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:var(--sans); }
+  * { box-sizing: border-box; }
+  ::selection { background: color-mix(in oklab, var(--accent) 35%, transparent); color: var(--fg); }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in oklab, var(--accent) 40%, transparent); }
+  a:hover { border-bottom-color: var(--accent); }
+
+  .wrap { max-width: 720px; margin: 0 auto; padding: 56px 32px 140px; }
+  .topbar { display:flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .6px; text-transform: uppercase; max-width: 1200px; margin: 0 auto; padding: 20px 32px; border-bottom: 1px solid var(--border); }
+  .topbar a { color: var(--fg-dim); border: none; }
+  .topbar a:hover { color: var(--accent); }
+  .topbar .right { display: flex; gap: 14px; align-items: center; }
+  .theme-btn { background: transparent; border: 1px solid var(--border); color: var(--fg-dim); font-family: var(--mono); font-size: 10px; letter-spacing: .5px; text-transform: uppercase; padding: 4px 10px; border-radius: 3px; cursor: pointer; }
+  .theme-btn:hover { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 40%, var(--border)); }
+
+  .meta { font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: .4px; display: flex; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; }
+  .meta .dot { color: var(--faint); }
+
+  h1.title { font-size: 56px; font-weight: 400; letter-spacing: -1.2px; line-height: 1.05; margin: 0; text-wrap: balance; }
+  .dek { font-family: var(--serif); font-style: italic; font-size: 26px; color: var(--fg-dim); line-height: 1.35; margin-top: 18px; text-wrap: pretty; }
+
+  article p { font-size: 17.5px; line-height: 1.75; color: var(--fg-body); margin: 22px 0; text-wrap: pretty; }
+  article h2 { font-size: 28px; font-weight: 400; letter-spacing: -.4px; margin: 72px 0 4px; line-height: 1.2; }
+  article h2 .num { font-family: var(--mono); font-size: 12px; color: var(--accent); display: block; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  article h3 { font-size: 20px; font-weight: 500; margin: 44px 0 -6px; color: var(--fg); }
+
+  article ul { padding-left: 22px; }
+  article li { font-size: 17px; line-height: 1.7; color: var(--fg-body); margin: 10px 0; }
+  article li strong { color: var(--fg); font-weight: 500; }
+  article strong { color: var(--fg); font-weight: 500; }
+
+  article code { font-family: var(--mono); font-size: 14.5px; color: var(--accent); background: color-mix(in oklab, var(--accent) 6%, transparent); padding: 1px 6px; border-radius: 3px; }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; overflow: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.7; color: var(--fg-code); }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+  pre .k { color: var(--accent); }
+  pre .c { color: var(--muted); font-style: italic; }
+
+  blockquote { border-left: 2px solid var(--accent); margin: 28px 0; padding: 4px 0 4px 20px; color: var(--fg-dim); font-family: var(--serif); font-style: italic; font-size: 19px; line-height: 1.55; }
+
+  .footnote { font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin-top: 10px; line-height: 1.65; }
+  .lede { font-size: 20px; color: var(--fg); line-height: 1.6; margin-top: 30px; }
+  .endnote { margin-top: 120px; padding-top: 36px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 12.5px; color: var(--muted); line-height: 1.8; }
+
+  .tag-row { display:flex; gap: 8px; flex-wrap: wrap; }
+  .tag { font-family: var(--mono); font-size: 10.5px; color: var(--muted); border: 1px solid var(--border); padding: 3px 8px; border-radius: 3px; letter-spacing: .5px; text-transform: uppercase; }
+  .ornament { display:flex; justify-content: center; margin: 48px 0; color: var(--muted); letter-spacing: 8px; font-family: var(--mono); font-size: 12px; }
+
+  /* figures — the infographic panels are light-on-white, so they get a white plate in dark mode */
+  figure { margin: 56px 0; }
+  figure.breakout { width: calc(100% + 160px); margin-left: -80px; margin-right: -80px; }
+  figure img { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 4px; background: #fff; }
+  figure.panel img { max-width: 560px; margin: 0 auto; }
+  figcaption { font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin-top: 14px; letter-spacing: .3px; line-height: 1.6; display: flex; gap: 14px; }
+  figcaption .fignum { color: var(--accent); white-space: nowrap; }
+  @media (max-width: 900px) { figure.breakout { width: 100%; margin-left: 0; margin-right: 0; } }
+
+  .author-card { display: flex; align-items: center; gap: 14px; margin-top: 32px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+  .author-card img { width: 44px; height: 44px; border-radius: 999px; object-fit: cover; border: 1px solid var(--border); filter: grayscale(0.15) contrast(1.02); }
+  .author-card .info { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .author-card .info a { color: var(--fg-dim); border: none; }
+  .author-card .info a:hover { color: var(--accent); }
+
+  .tbl { width: 100%; border-collapse: collapse; margin: 32px 0; font-size: 14.5px; }
+  .tbl th, .tbl td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .tbl th { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .6px; text-transform: uppercase; font-weight: 500; }
+  .tbl td { color: var(--fg-body); }
+  .tbl td.num { font-family: var(--mono); font-size: 13.5px; }
+  .tbl td.hi { color: var(--accent); }
+  .tbl-note { font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin-top: -20px; }
+  .tbl-wrap { overflow-x: auto; }
+  .callout { border: 1px solid var(--border); background: var(--surface); border-radius: 4px; padding: 18px 22px; margin: 32px 0; font-size: 15px; line-height: 1.7; color: var(--fg-dim); }
+  .callout strong { color: var(--fg); font-weight: 500; }
+  .callout code { font-size: 13px; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 36px 0 0; }
+  .stat { border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; }
+  .stat .v { font-family: var(--mono); font-size: 20px; color: var(--accent); }
+  .stat .k { font-family: var(--mono); font-size: 10.5px; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; margin-top: 4px; }
+  @media (max-width: 640px) { .stats { grid-template-columns: 1fr 1fr; } h1.title { font-size: 40px; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/">← ved1beta</a>
+  <div class="right">
+    <span>essay · 2026</span>
+    <button class="theme-btn" id="theme-toggle" aria-label="toggle colour theme">☼ light</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <article>
+    <div class="meta">
+      <span>2026-09-17</span><span class="dot">·</span>
+      <span>12 min read</span><span class="dot">·</span>
+      <span class="tag-row"><span class="tag">spec decoding</span><span class="tag">inference</span><span class="tag">flashinfer</span></span>
+    </div>
+
+    <h1 class="title">Nanospec: a spec decoding engine in under 3k lines</h1>
+    <div class="dek">Llama-3.1-8B-Instruct, one H100, ~3k lines of PyTorch + FlashInfer. Paged KV, continuous batching, CUDA graphs, EAGLE-3 chain and tree speculation. 1.94× over the engine&rsquo;s own memory-bound decode at batch 1, every output byte-identical to plain greedy.</div>
+    <div class="author-card">
+      <img src="assets/headshot.jpeg" alt="Ved" />
+      <div class="info">
+        <div>by <a href="/">Ved</a> · systems engineer at Axolotl AI · code at <a href="https://github.com/ved1beta/nanospec">github/ved1beta/nanospec</a></div>
+        <div>github / <a href="https://github.com/ved1beta">ved1beta</a> · x / @ant_vedaya</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="v">1.94×</div><div class="k">over memory-bound decode</div></div>
+      <div class="stat"><div class="v">3.92</div><div class="k">tokens / step, 6×5 tree</div></div>
+      <div class="stat"><div class="v">~3k</div><div class="k">lines, pytorch + flashinfer</div></div>
+      <div class="stat"><div class="v">0 diff</div><div class="k">vs plain greedy</div></div>
+    </div>
+
+    <figure class="panel">
+      <img src="assets/nanospec-01-glance.png" alt="Nanospec at a glance: continuous batching, paged KV cache, speculative decoding (EAGLE-3) and CUDA graphs snapped together under Llama-3.1-8B-Instruct, with 1.94x, byte-identical, ~3000 lines and one H100 called out" />
+      <figcaption><span class="fignum">fig. 01</span><span>the whole engine on one card. four pieces that snap together, each with its own test.</span></figcaption>
+    </figure>
+
+    <h2><span class="num">§ 01</span>Why nano spec</h2>
+
+    <p class="lede">Here&rsquo;s the question that started this. Speculative decoding uses a small draft model to guess what the big model will say next, and it only speeds things up when the guesses are right. But when you train the big model with RL, it keeps changing, and a draft fitted to last week&rsquo;s version slowly stops predicting it.</p>
+
+    <figure class="panel">
+      <img src="assets/nanospec-02-speculative-decoding.png" alt="Speculative decoding: the draft model guesses Paris is known, the target verifies in parallel, accepts three tokens, rejects the fourth and continues from the last accepted token" />
+      <figcaption><span class="fignum">fig. 02</span><span>the loop. draft k tokens cheaply, verify them all in one target forward, keep the accepted prefix, fall back to the target for the rest.</span></figcaption>
+    </figure>
+
+    <p>vLLM and SGLang both do speculative decoding well. But answering this means measuring acceptance at every training step, which is hard. You know what is harder? Writing your own engine from the ground up :)</p>
+
+    <figure class="panel">
+      <img src="assets/nanospec-09-draft-goes-stale.png" alt="Why the draft model goes stale: RL training shifts the target model's distribution while the draft stays fitted to the old checkpoint, so it gradually stops predicting well" />
+      <figcaption><span class="fignum">fig. 03</span><span>the motivating question. the target moves every step; the draft doesn&rsquo;t. to see acceptance decay you have to measure it inside the training loop.</span></figcaption>
+    </figure>
+
+    <p>So nanospec exists to be small enough to read and rigid enough to trust. Every invariant has a test, and the first invariant is the strictest one.</p>
+
+    <h2><span class="num">§ 02</span>Making it correct</h2>
+
+    <p>Before paging, before batching, before anything: the model must produce exactly what <code>transformers</code> produces. Not &ldquo;close&rdquo;. <em>Bit-identical.</em> If it isn&rsquo;t, every later test is comparing against noise.</p>
+
+    <p>It&rsquo;s achievable, but only by copying Hugging Face&rsquo;s exact order of operations, down to where each rounding happens. Once that&rsquo;s done, all 32 test prompts match token-for-token and logit-for-logit on CPU, MPS, and H100.</p>
+
+    <figure class="panel">
+      <img src="assets/nanospec-08-correctness-testing.png" alt="Correctness testing checklist: 32 prompts on CPU, MPS and H100, strict token-for-token with SDPA, tolerant tie rule with FlashInfer, compared against the batch-1 run's own logits" />
+      <figcaption><span class="fignum">fig. 04</span><span>the oracle. hugging face on one side, nanospec on the other, and nothing else in the suite is trusted until this arrow holds.</span></figcaption>
+    </figure>
+
+    <p>First everything was SDPA and unfused ops. Then I switched attention to FlashInfer and the first H100 run failed 50 of 139 tests. T_T</p>
+
+    <h3>bf16 doesn&rsquo;t have ties, until it does</h3>
+
+    <p>Every failure was a coherent alternative continuation: <em>&ldquo;Paris is known for its history&rdquo;</em> vs <em>&ldquo;its culture&rdquo;</em>. The reference and nanospec had both picked a plausible next token; they had just picked different ones. At those steps, HF&rsquo;s top-two logits were <strong>exactly equal in bf16</strong> — the same 8-bit mantissa — and FlashInfer&rsquo;s kernel, summing in a different order, tipped the tie the other way. From that step on the two texts are legitimately different.</p>
+
+    <figure class="panel">
+      <img src="assets/nanospec-06-bf16-ties.png" alt="The bf16 tie problem: two exactly equal bf16 logits, 'history' vs 'culture'; a different summation order breaks the tie the other way" />
+      <figcaption><span class="fignum">fig. 05</span><span>same mantissa, different summation order, different argmax. ~1 ulp per step, compounding to ~7 over 128 steps through the KV cache.</span></figcaption>
+    </figure>
+
+    <p>I measured it properly (<code>tests/diag_numerics.py</code>): SDPA vs HF is 0.00 ulps everywhere; FlashInfer vs HF is ~1 ulp of the row&rsquo;s largest logit per step, compounding to ~7 over 128 steps as each step&rsquo;s slightly-different K/V feeds the next. Every single divergence in the suite sits on a gap of 0.0000–0.25 logits.</p>
+
+    <p>So the tests have two modes. With the SDPA backend, equality is strict. With FlashInfer, a divergence is tolerated only if the reference&rsquo;s logit for <em>our</em> token is within 8 ulps-of-row-max of its best logit.</p>
+
+    <div class="callout"><strong>One trap inside this trap:</strong> when you compare a <em>batched</em> run against a <em>batch-1</em> run, you must judge the tie against the batch-1 run&rsquo;s own logits — not HF&rsquo;s. The batch-1 run may itself have tie-diverged from HF at step 24, after which HF&rsquo;s logits describe a different sentence entirely and every step looks like a &ldquo;clear-gap bug&rdquo;. I lost an afternoon to phantom failures before adding <code>record_logits=True</code> to the reference engine.</div>
+
+    <figure class="panel">
+      <img src="assets/nanospec-07-batch1-trap.png" alt="Batched vs batch-1 trap: comparing a batched run to HF logits looks like a clear-gap bug; comparing to the batch-1 run's own logits accounts for tie divergence" />
+      <figcaption><span class="fignum">fig. 06</span><span>the wrong comparison and the right one. once the batch-1 run has tie-diverged from HF, HF&rsquo;s logits describe a sentence nobody is generating.</span></figcaption>
+    </figure>
+
+    <h2><span class="num">§ 03</span>Paged KV, in 130 lines</h2>
+
+    <p>The allocator is pure Python over ints: a free list, and per request a list of physical block ids plus a length. <code>alloc</code>, <code>append</code> (grabs a block only when crossing a boundary), <code>rollback</code> (frees whole blocks past the new tail — this is the primitive speculative rejection needs), <code>free</code>, and <code>check()</code>, which asserts every block is in exactly one place. The paging test allocates fifty random requests, frees every other one, and only <em>then</em> starts the correctness prompts.</p>
+
+    <figure class="panel">
+      <img src="assets/nanospec-03-paged-kv.png" alt="Paged KV cache: physical blocks, a pure-Python allocator with alloc/append/rollback/free/check, and per-request block lists" />
+      <figcaption><span class="fignum">fig. 07</span><span>the allocator never touches a tensor. block ids and lengths, five methods, and one <code>check()</code> that makes every invariant a test.</span></figcaption>
+    </figure>
+
+    <p>The tensor side is <code>[num_blocks, block_size, kv_heads, head_dim]</code> per layer (FlashInfer&rsquo;s NHD layout) and one object per step, <code>AttnMeta</code>: for each request the query positions, the slots to write, how much KV to attend, and an optional mask. Writing K/V is a single <code>index_put</code> into the flattened block dimension — no scatter kernel to get wrong.</p>
+
+    <p>One rule that paid for itself: the cache is <strong>zero-initialised, not <code>torch.empty</code></strong>. Masked-out slots are still <em>read</em> by the kernel; garbage in a slot the mask should hide is still garbage that a NaN can climb out of.</p>
+
+    <h2><span class="num">§ 04</span>Batching is where GEMMs stop being functions</h2>
+
+    <p>Continuous batching itself was uneventful — the scheduler decides <em>what</em> runs (FIFO admission; one request finishes, its blocks go back), the engine turns the batch into one <code>AttnMeta</code>. But its test taught me something I&rsquo;d read about and not believed: <strong>the same row through a GEMM gives different bits depending on how many other rows are in the batch.</strong></p>
+
+    <figure class="panel">
+      <img src="assets/nanospec-04-continuous-batching.png" alt="Continuous batching: a FIFO of requests through the scheduler into one AttnMeta per step; finished requests return their blocks to the pool" />
+      <figcaption><span class="fignum">fig. 08</span><span>the scheduler owns admission and block recycling; the engine owns tensors. a request finishing frees its blocks the same step.</span></figcaption>
+    </figure>
+
+    <p>On MPS the <code>lm_head</code> GEMM is batch-invariant up to 12 rows and not at 13; cuBLAS picks split-K by M. The batched-vs-batch-1 test therefore inherits the tie rule too. There is no honest way around this short of batch-invariant kernels.</p>
+
+    <h2><span class="num">§ 05</span>CUDA graphs: a decode step is 7 ms and 400 kernels</h2>
+
+    <p>At batch 1, an 8B model in bf16 reads 16 GB of weights per token. At the H100&rsquo;s ~2.5 TB/s, that sets a floor of ~6.5 ms. Eager PyTorch took 17–19 ms because a 32-layer forward is ~400 kernel launches, and the CPU can&rsquo;t issue them fast enough.</p>
+
+    <figure class="panel">
+      <img src="assets/nanospec-05-cuda-graphs.png" alt="CUDA graphs: eager PyTorch at 17-19 ms for ~400 kernel launches versus one captured graph per batch bucket at ~7 ms" />
+      <figcaption><span class="fignum">fig. 09</span><span>the gap between 17 ms and 7 ms is launch overhead, not math. one captured graph per bucket, static buffers, and the CPU steps out of the way.</span></figcaption>
+    </figure>
+
+    <p>The graph runner captures one graph per batch-size bucket {1, 2, 4, 8, 16, 32, 64}. Each graph has static buffers for tokens, positions, slots, and FlashInfer&rsquo;s index and mask data. Every step runs <code>plan()</code> on the host (0.16 ms), copies inputs into those buffers, and replays the graph. A batch smaller than its bucket gets padding rows that write to a reserved pad block. The result is <strong>7.3 ms per step</strong>, close to the floor.</p>
+
+    <p>FlashInfer&rsquo;s fused RMSNorm and RoPE kernels cut each layer from ~15 kernels to ~4. They round once where HF rounds twice, though, so the SDPA oracle doesn&rsquo;t use them. A teacher-forced test staggers arrivals and finishes so the batch crosses every bucket in both directions. Over 112 steps, the worst graph-vs-eager difference was 2.3 ulps.</p>
+
+    <h2><span class="num">§ 06</span>EAGLE-3, from the head&rsquo;s point of view</h2>
+
+    <p>The draft model, <code>yuhuili/EAGLE3-LLaMA3.1-Instruct-8B</code>, is a single Llama layer. At position <em>i</em>, it takes two inputs: the target&rsquo;s hidden states at the inputs of layers 2, 16, and 29 (12288 dims, projected to 4096), and the embedding of token <em>i+1</em>. From those, it predicts token <em>i+2</em> over a 32k vocabulary. <code>d2t</code> maps draft tokens back to the target&rsquo;s 128k vocabulary as an offset, <code>target = draft + d2t[draft]</code>. Used as a direct index, it produces plausible-looking garbage. For deeper steps in a chain, the layer&rsquo;s own pre-norm output replaces the target&rsquo;s hidden state.</p>
+
+    <p>The tests caught two mistakes in my thinking:</p>
+
+    <ul>
+      <li><strong>Low acceptance wasn&rsquo;t a bug.</strong> On raw prompts the head accepted only 0.6 drafts per step. A teacher-forced probe showed 80% top-1 accuracy on chat-templated input, and my configuration was the best of six variants. That configuration used taps 2/16/29 and RoPE θ = 10000 from the head&rsquo;s own config, not the target&rsquo;s 500000. The head was trained on conversations, and on MT-Bench with the chat template a chain accepts 2.66 tokens per step. Acceptance depends on the workload.</li>
+      <li><strong>Losslessness doesn&rsquo;t depend on draft quality.</strong> A random head accepts nothing and must still match greedy exactly. To test partial accepts locally, the tiny model drafts for itself, with a wrong token forced in at every third position.</li>
+    </ul>
+
+    <h2><span class="num">§ 07</span>The tree: 30 draft tokens verified in one forward</h2>
+
+    <p>A depth-5 chain verifies 6 rows per step. A topk × depth tree verifies 1 + topk·depth rows, and each row attends only to the prefix, the root, and its own ancestors. Nodes are picked the EAGLE-2 way: expand each node&rsquo;s top-k children, then keep the global top-k by cumulative log-prob.</p>
+
+<pre><code>kv:      prefix ....... | root | n0 n1 n2 n3 | n4 n5 ...
+
+row n0   #########        #      #
+row n4   #########        #      #             #        <span class="c">(parent n0)</span></code></pre>
+
+    <p>Verification walks down from the root, following whichever child matches the target&rsquo;s argmax, until no child matches. The argmax at the last accepted node becomes the bonus token. The accepted path&rsquo;s K/V is then copied from scattered tree slots into contiguous positions. Nodes are stored level by level, so every source slot sits at or after its destination, and the copy can&rsquo;t overwrite data it still needs. A test compares the resulting cache against a fresh prefill, layer by layer. Drafting uses the same masks: siblings at a level share a RoPE position but occupy different slots, and they can&rsquo;t see each other.</p>
+
+    <p>Two FlashInfer quirks each cost a day. First, FA3 doesn&rsquo;t support custom masks. On trees it raises an error. Worse, in the graph runner an all-causal chain batch silently ran with no mask, so verify rows saw the future (137 ulps). The fix is <code>backend="fa2"</code> for masked wrappers and always materializing masks. Second, the decode wrapper names its buffer kwargs <code>_buffer</code>, while the prefill wrapper uses <code>_buf</code>.</p>
+
+    <h2><span class="num">§ 08</span>The number, and what it isn&rsquo;t</h2>
+
+    <p>Batch 1, chat-templated MT-Bench, H100, every configuration byte-identical to plain greedy:</p>
+
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>configuration</th><th>tok/s</th><th>tokens/step</th><th>vs no-spec</th></tr></thead>
+      <tbody>
+        <tr><td>no speculation + graphs</td><td class="num">137</td><td class="num">1.00</td><td class="num">1.00×</td></tr>
+        <tr><td>chain, depth 5</td><td class="num">252</td><td class="num">2.88</td><td class="num">1.83×</td></tr>
+        <tr><td>tree 4 × 5</td><td class="num">253</td><td class="num">3.77</td><td class="num">1.84×</td></tr>
+        <tr><td>tree 6 × 5</td><td class="num hi">266</td><td class="num hi">3.92</td><td class="num hi">1.94×</td></tr>
+      </tbody>
+    </table></div>
+
+    <p>A 6×5 tree step takes 14.3 ms:</p>
+
+    <ul>
+      <li><strong>Verify: 8.3 ms.</strong> 30 rows cost the same as one because weight reads dominate.</li>
+      <li><strong>Accept: 0.2 ms.</strong></li>
+      <li><strong>Extend: 1.1 ms.</strong></li>
+      <li><strong>Four draft levels: 4.7 ms.</strong></li>
+    </ul>
+
+    <p>The drafting is where the 2× went. Its GPU work is under 1 ms. The rest is each level sending its tokens back to the host to build the next mask while the GPU sits idle. I tried two fixes and reverted both. Host-side micro-optimizations didn&rsquo;t help, because profiling showed only 0.4 ms of host work in total. Dense in-graph attention for the draft was no faster, and it was 40–90 ulps off.</p>
+
+    <p>The real fix is building the whole tree on the GPU with a single sync, like SGLang&rsquo;s <code>build_tree_kernel</code>. That&rsquo;s the first v1.0 item, and the 2× test is marked <code>xfail</code> with that reason instead of a lowered bar.</p>
+
+    <p>nanospec also lacks several things the production engines have:</p>
+
+    <ul>
+      <li>No prefix caching, chunked prefill, or FP8 KV.</li>
+      <li>Greedy verification only.</li>
+      <li>A fixed tree of at most 32 tokens, where SGLang uses 64 with dynamic pruning.</li>
+    </ul>
+
+    <p>Benchmarks against vLLM and SGLang come next; the harness is in <code>bench/</code>.</p>
+
+    <div class="ornament">· · ·</div>
+
+    <h2><span class="num">epilogue</span>Trust the oracle, then measure the kernel</h2>
+
+    <p>Every hard bug in this project was a numerics bug wearing a logic bug&rsquo;s clothes. A tie in bf16 looks like a wrong token. A split-K choice looks like a batching bug. A missing mask looks like a broken tree. The only reason any of them were findable is that there was a bit-exact SDPA path to fall back to, and a measured number — ulps of row max — to say how far off &ldquo;off&rdquo; really was.</p>
+
+    <blockquote>Build the slow, exact version first. It&rsquo;s the only thing that can tell you whether the fast one is wrong.</blockquote>
+
+    <div class="endnote">
+      <div>— ved · september 2026 · <a href="/">back to portfolio</a> · <a href="https://github.com/ved1beta/nanospec">github/ved1beta/nanospec</a></div>
+      <div>find me at x/@ant_vedaya · github/ved1beta · ved@axolotl.ai</div>
+      <div style="margin-top: 14px; color: var(--faint);">if you&rsquo;re measuring draft acceptance under RL, or have opinions on batch-invariant kernels, i&rsquo;d be glad to compare notes.</div>
+    </div>
+  </article>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById("theme-toggle");
+    function label() { btn.textContent = Theme.current() === "light" ? "☾ dark" : "☼ light"; }
+    btn.addEventListener("click", Theme.toggle);
+    window.addEventListener("themechange", label);
+    label();
+  })();
+</script>
+</body>
+</html>

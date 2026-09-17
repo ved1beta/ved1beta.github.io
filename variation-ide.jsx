@@ -12,6 +12,7 @@ function CmdK({ open, onClose, onNav }) {
     { id: "projects/",     label: "projects",              kind: "page" },
     { id: "prs/",          label: "prs — open source merged work", kind: "page" },
     { id: "blog/",          label: "blog — index",          kind: "page" },
+    { id: "blog/nanospec.md",        label: "nanospec \u2014 a spec decoding engine under 3k lines", kind: "post" },
     { id: "blog/moe-fp32.md",        label: "127 gib \u2192 18 gib \u2014 fine-tuning a frontier moe on one gpu", kind: "post" },
     { id: "blog/expert-parallel.md", label: "expert parallelism in axolotl \u2014 deepep", kind: "post" },
     { id: "blog/tiny-gpt-jax.md", label: "trained a tiny gpt in jax", kind: "post" },
@@ -19,6 +20,7 @@ function CmdK({ open, onClose, onNav }) {
     { id: "blog/mxfp4.md",  label: "mxfp4, end-to-end",     kind: "post" },
     { id: "blog/engram.md", label: "engram — conditional memory via scalable lookup", kind: "post" },
     { id: "contact",       label: "contact",               kind: "page" },
+    { id: "act:theme",     label: "toggle light / dark",   kind: "action" },
     { id: "ext:github",    label: "github.com/ved1beta",   kind: "link", href: "https://github.com/ved1beta" },
     { id: "ext:x",         label: "x / @ant_vedaya",       kind: "link", href: "https://x.com/ant_vedaya" },
     { id: "ext:email",     label: "ved@axolotl.ai",        kind: "link", href: "mailto:ved@axolotl.ai" },
@@ -29,14 +31,15 @@ function CmdK({ open, onClose, onNav }) {
 
   function runItem(it) {
     if (it.kind === "link") window.open(it.href, "_blank");
+    else if (it.kind === "action") window.Theme && window.Theme.toggle();
     else onNav(it.id);
     onClose();
   }
 
   if (!open) return null;
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: "12vh" }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: 560, background: "#0d0d0d", border: "1px solid var(--border)", borderRadius: 6, boxShadow: "0 24px 60px rgba(0,0,0,0.6)", overflow: "hidden" }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "var(--overlay)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: "12vh" }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 560, background: "var(--panel)", border: "1px solid var(--border)", borderRadius: 6, boxShadow: "0 24px 60px var(--overlay)", overflow: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderBottom: "1px solid var(--border)" }}>
           <span style={{ color: "var(--accent)", fontFamily: "var(--mono)", fontSize: 13 }}>›</span>
           <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)}
@@ -77,6 +80,13 @@ function CmdK({ open, onClose, onNav }) {
 function VariationIDE() {
   const [active, setActive] = React.useState("readme.md");
   const [palette, setPalette] = React.useState(false);
+  const [theme, setTheme] = React.useState(() => (window.Theme ? window.Theme.current() : "light"));
+
+  React.useEffect(() => {
+    const onTheme = e => setTheme(e.detail);
+    window.addEventListener("themechange", onTheme);
+    return () => window.removeEventListener("themechange", onTheme);
+  }, []);
 
   React.useEffect(() => {
     function onKey(e) {
@@ -94,6 +104,7 @@ function VariationIDE() {
     { id: "projects/",      label: "projects/",     group: "dir" },
     { id: "prs/",           label: "prs/",          group: "dir" },
     { id: "blog/",          label: "blog/",         group: "dir" },
+    { id: "blog/nanospec.md",        label: "  nanospec.md",               group: "nested" },
     { id: "blog/moe-fp32.md",        label: "  moe-fp32-census.md",        group: "nested" },
     { id: "blog/expert-parallel.md", label: "  expert-parallel-deepep.md", group: "nested" },
     { id: "blog/tiny-gpt-jax.md", label: "  tiny-gpt-jax.md", group: "nested" },
@@ -110,9 +121,9 @@ function VariationIDE() {
       <div style={{ gridColumn: "1 / -1", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", padding: "0 16px", fontFamily: "var(--mono)", fontSize: 11, color: "var(--muted)", letterSpacing: 0.5, justifyContent: "space-between" }}>
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           <div style={{ display: "flex", gap: 6 }}>
-            <span style={{ width: 10, height: 10, borderRadius: 999, background: "#2a2a2a" }}></span>
-            <span style={{ width: 10, height: 10, borderRadius: 999, background: "#2a2a2a" }}></span>
-            <span style={{ width: 10, height: 10, borderRadius: 999, background: "#2a2a2a" }}></span>
+            <span style={{ width: 10, height: 10, borderRadius: 999, background: "var(--dot)" }}></span>
+            <span style={{ width: 10, height: 10, borderRadius: 999, background: "var(--dot)" }}></span>
+            <span style={{ width: 10, height: 10, borderRadius: 999, background: "var(--dot)" }}></span>
           </div>
           <span>~/ved1beta</span>
           <span style={{ color: "var(--accent)" }}>· main</span>
@@ -120,6 +131,13 @@ function VariationIDE() {
         <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
           <button onClick={() => setPalette(true)} style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--fg-dim)", fontFamily: "var(--mono)", fontSize: 10, padding: "4px 10px", borderRadius: 3, letterSpacing: 0.5, cursor: "pointer" }}>
             ⌘K palette
+          </button>
+          <button
+            onClick={() => window.Theme && window.Theme.toggle()}
+            title={theme === "light" ? "switch to dark" : "switch to light"}
+            aria-label="toggle colour theme"
+            style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--fg-dim)", fontFamily: "var(--mono)", fontSize: 10, padding: "4px 10px", borderRadius: 3, letterSpacing: 0.5, cursor: "pointer" }}>
+            {theme === "light" ? "☾ dark" : "☼ light"}
           </button>
           <span>·</span>
           <span style={{ color: "var(--accent)" }}><Dot /> online</span>
@@ -173,6 +191,7 @@ function IDEContent({ active, onNav }) {
   if (active === "projects/") return <ProjectsDoc />;
   if (active === "prs/") return <PRsDoc />;
   if (active === "blog/") return <BlogIndexDoc />;
+  if (active === "blog/nanospec.md")        return <BlogPostDoc post={POSTS.find(p => p.slug === "nanospec")} />;
   if (active === "blog/moe-fp32.md")        return <BlogPostDoc post={POSTS.find(p => p.slug === "moe-fp32-census")} />;
   if (active === "blog/expert-parallel.md") return <BlogPostDoc post={POSTS.find(p => p.slug === "expert-parallel-deepep")} />;
   if (active === "blog/tiny-gpt-jax.md") return <BlogPostDoc post={POSTS.find(p => p.slug === "tiny-gpt-jax")} />;
@@ -368,9 +387,9 @@ function ReadmeDoc({ onNav }) {
             <a href={lastShipped.url} target="_blank" rel="noreferrer" style={{ color: "var(--accent)", textDecoration: "none" }}>
               {lastShipped.repo}#{lastShipped.num}
             </a>
-            <span style={{ color: "#444" }}> · </span>
+            <span style={{ color: "var(--faint)" }}> · </span>
             <span>{whenLabel}</span>
-            {isLive && <span style={{ color: "#444" }}> · </span>}
+            {isLive && <span style={{ color: "var(--faint)" }}> · </span>}
             {isLive && <span style={{ color: "var(--accent)", opacity: 0.7 }}>live</span>}
           </div>
         </div>
@@ -468,7 +487,7 @@ serve:  `}<span style={{ color: "var(--accent)" }}>vllm</span>{` · `}<span styl
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, fontFamily: "var(--mono)", fontSize: 11 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <span style={{ color: p.state === "merged" ? "var(--accent)" : "var(--muted)", letterSpacing: 0.5, textTransform: "uppercase", fontSize: 10 }}>
-                    <Dot color={p.state === "merged" ? "var(--accent)" : "#666"} /> {p.state}
+                    <Dot color={p.state === "merged" ? "var(--accent)" : "var(--muted)"} /> {p.state}
                   </span>
                   <span style={{ color: "var(--fg-dim)" }}>{p.repo}#{p.num}</span>
                   {p.area && (
@@ -603,7 +622,7 @@ function PRsDoc() {
       <h2 style={{ fontSize: 36, fontWeight: 400, letterSpacing: -0.6, margin: 0 }}>Open source</h2>
       <div style={{ marginTop: 8, fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--muted)" }}>
         {prs.length} merged PRs across {repoCount} {repoCount === 1 ? "repo" : "repos"}
-        <span style={{ color: "#444" }}>  ·  </span>
+        <span style={{ color: "var(--faint)" }}>  ·  </span>
         {status === "live" && <span style={{ color: "var(--accent)" }}>● live from github</span>}
         {status === "static" && <span>loading…</span>}
         {status === "error" && <span style={{ color: "var(--muted)" }}>github unreachable — showing static</span>}
@@ -652,6 +671,7 @@ function PRsDoc() {
 }
 
 const POST_URL = {
+  "nanospec":               "nanospec-blog.html",
   "moe-fp32-census":        "moe-fp32-blog.html",
   "expert-parallel-deepep": "expert-parallel-blog.html",
   "tiny-gpt-jax":    "jax-gpt-blog.html",
@@ -670,7 +690,7 @@ function BlogIndexDoc() {
           const href = POST_URL[p.slug];
           const inner = (
             <div style={{ padding: "20px 0", borderTop: "1px solid var(--border)" }}>
-              <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--muted)" }}>{p.date} · {p.read} · {p.tags.join(", ")} {p.source && <span>· {p.source}</span>} {!href && <span style={{ color: "#444" }}>· draft</span>}</div>
+              <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--muted)" }}>{p.date} · {p.read} · {p.tags.join(", ")} {p.source && <span>· {p.source}</span>} {!href && <span style={{ color: "var(--faint)" }}>· draft</span>}</div>
               <div style={{ fontSize: 20, marginTop: 8 }}>{p.title} {p.featured && <Tag accent>featured</Tag>}</div>
               <div style={{ fontSize: 14, color: "var(--muted)", marginTop: 4 }}>{p.sub}</div>
             </div>
