@@ -54,6 +54,14 @@ const WORK = [
 
 const PROJECTS = [
   {
+    name: "nanospec",
+    sub: "a speculative decoding engine in under 3k lines",
+    desc: "Paged KV cache, continuous batching, CUDA graphs, and EAGLE-3 chain + tree speculation for Llama-3.1-8B on one H100 \u2014 ~3k lines of PyTorch + FlashInfer. 1.94\u00d7 over memory-bound decode at batch 1, every output byte-identical to greedy. Built to measure draft acceptance inside an RL training loop; the SDPA path is bit-exact against transformers and every invariant has a test.",
+    repo: "ved1beta/nanospec",
+    url:  "https://github.com/ved1beta/nanospec",
+    stack: "PyTorch \u00b7 FlashInfer \u00b7 CUDA graphs \u00b7 EAGLE-3",
+  },
+  {
     name: "Quanta",
     sub: "lightweight quantization primitives for PyTorch",
     desc: "int8 / int4 / NF4 / FP4 / NF8 / FP8 in one consistent API. Triton kernels for blockwise NF4/FP4 encode-decode and fused 4-bit weight matmul; torch._int_mm for int8 Linear on CUDA. Benchmarks vs bitsandbytes: ~1.5× faster int8 quantize, 33% lower round-trip error; bnb still ahead on 4-bit Linear forward.",
@@ -147,10 +155,10 @@ const POSTS = [
 ];
 
 const NOW = [
-  "Debugging PTQ for MXFP4 (axolotl#3539 / #3581).",
-  "Reading the TorchAO paper end-to-end, third pass.",
-  "Benchmarking NVFP4 on Blackwell once hardware frees up.",
-  "On the side: a tiny W4A8 inference runtime called Quanta.",
+  "nanospec v1.0: building the whole EAGLE-3 draft tree on the GPU with a single sync (SGLang-style build_tree_kernel) \u2014 the 2\u00d7 that drafting round-trips are currently eating.",
+  "Benchmarking nanospec against vLLM and SGLang on MT-Bench; harness is in bench/.",
+  "Measuring draft-model acceptance decay across RL training steps \u2014 the question nanospec was built to answer.",
+  "Still on the day job: MoE fine-tuning in Axolotl (quantize_moe_experts, DeepEP expert parallelism).",
 ];
 
 // --- Primitives ---
